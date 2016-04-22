@@ -5,7 +5,7 @@ SupportedVMRoleSizes.doc - To identify what VM sizes are supported by their exis
 
 Please use Export switch for ARM premium accounts only, for ASM standard storage billable size you may use the script here https://gallery.technet.microsoft.com/scriptcenter/Get-Billable-Size-of-32175802.
 
-AZDCIPRanges.PS1 - Script to download (https://www.microsoft.com/en-in/download/details.aspx?id=41653) the IP range for the specified region and add it to the windows firewall outbound IP ranges to restric communication within AZ datacenters only. Requires elevation.
+AZDCIPRanges.PS1 - Script to download IP range (https://www.microsoft.com/en-in/download/details.aspx?id=41653) for a specified region and add it to windows firewall outbound IP ranges to restrict communication within AZ datacenters only. Requires elevation.
 
     .\AZDCIPRanges.ps1  -region "useast"
 
