@@ -3,8 +3,7 @@ Thought it would be interesting to write a script to
 
 SupportedVMRoleSizes - To identify what VM sizes are supported by their existing cloud services. 
 
-StorageBlobEnum.PS1 - Powershell script with functionality for exporting blob details to an excel file. Sample attached.
-
+StorageBlobEnum.PS1 - Powershell script with functionality for Listing and exporting blob details to an excel file or deleting blobs. 
     Choice = List\Delete\Export
     .\StorageBlobEnum.ps1 -SubscriptionID <Subscription ID> -StorageType "PremiumLRS" -Choice "List"
     .\StorageBlobEnum.ps1 -SubscriptionID <Subscription ID> -StorageType "PremiumLRS" -Choice "Delete"
