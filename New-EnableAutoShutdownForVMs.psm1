@@ -12,14 +12,30 @@
     
 .EXAMPLE 
     
+    New-EnableAutoShutdownForVMs 
+        -subId = Your Subscription ID
+        -rgroup = Resource Group Name 
+        -vmname = Virutal Machine Name 
+        -location = Virtual Machine location
+        -ShutdownTime = 1400 HRS
+        -ClientId = Your Client ID 
+        -ClientKey = Your Secret Key
+        -TenantId = Tenant Id
+        
+        
     Save New-EnableAutoShutdownForVMs.PSM1 in your desired folder, say C:\AutoshutVM\
+    
+    Open a powershell editor and copy paste the below text to use this module. The below script imports this module and enables Autoshutdown for a selected resource group.
+    The below script can be customized further to enable autoshutdown for all VMs in a subscription just be removing the if statement inside For loop below.
+    
+    
     Import-Module "C:\AutoshutVM\New-EnableAutoShutdownForVMs.psm1"
     Login-AzureRmAccount
     $Tenant= Select-AzureRmSubscription -SubscriptionId <SubID>
     $subId = $Tenant.Subscription.SubscriptionId
-    $ClientID = "72xxxxxx-xxxx-xxxx-xxxx-xxxxxxxx49c2"
-    $ClientKey =  "Password@123!"
-    $TenantID= "72xxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxb47"
+    $ClientID = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+    $ClientKey =  "xxxxxxxxxxxx"
+    $TenantID= "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx"
     $VMlists = Get-AzureRmVM
 
     Foreach ($vmobj in $VMlists)
@@ -30,16 +46,6 @@
                 Write-Host $Output -ForegroundColor Green
             }
     }
-  
-    New-EnableAutoShutdownForVMs 
-        -subId = Your Subscription ID
-        -rgroup = Resource Group Name 
-        -vmname = Virutal Machine Name 
-        -location = Virtual Machine location
-        -ShutdownTime = 1400 HRS
-        -ClientId = Your Client ID 
-        -ClientKey = Your Secret Key
-        -TenantId = Tenant Id
 #> 
 
 
