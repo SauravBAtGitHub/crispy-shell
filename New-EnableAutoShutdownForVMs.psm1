@@ -12,7 +12,8 @@
     
 .EXAMPLE 
     
-    Import-Module "C:\Users\sauravb\Desktop\StorageEnum\New-EnableAutoShutdownForVMs.psm1"
+    Save New-EnableAutoShutdownForVMs.PSM1 in your desired folder, say C:\AutoshutVM\
+    Import-Module "C:\AutoshutVM\\New-EnableAutoShutdownForVMs.psm1"
     Login-AzureRmAccount
     $Tenant= Select-AzureRmSubscription -SubscriptionId <SubID>
     $subId = $Tenant.Subscription.SubscriptionId
