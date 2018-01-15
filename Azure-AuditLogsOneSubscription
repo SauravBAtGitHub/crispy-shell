@@ -1,0 +1,48 @@
+#Script to download Audit logs and filter output based on ResourceGroup
+
+#Creating Folder for output
+[system.io.directory]::CreateDirectory("$env:USERPROFILE\AzureScriptActivityLogOutput")
+
+#==============================================================
+$subid="<Subscription ID>" # Subscription ID
+$RGname="<ResourceGroupName>" # Resource group name
+# Start Date and End Date
+$filter="eventTimestamp ge '2017-12-25T22:00:37Z' and eventTimestamp le '2017-12-31T23:36:37Z' and eventChannels eq 'Admin, Operation' and resourceGroupName eq '$RGname'"
+#==============================================================
+
+#output Folder path
+$folderpath = ("$env:USERPROFILE\AzureScriptActivityLogOutput")
+$adTenant = "microsoft.onmicrosoft.com" 
+$clientId = "1950a258-227b-4e31-a9cf-717495945fc2" 
+$redirectUri = "urn:ietf:wg:oauth:2.0:oob"
+$resourceAppIdURI = "https://management.core.windows.net/"
+$authority = "https://login.windows.net/$adTenant"
+$authContext = New-Object "Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext" -ArgumentList $authority
+$authResult = $authContext.AcquireToken($resourceAppIdURI, $clientId, $redirectUri, "Auto")
+$authHeader = $authResult.CreateAuthorizationHeader()
+$method = "GET"
+$headerDate = '2015-04-01'
+$headers = @{"x-ms-version"="$headerDate";"Authorization" = $authHeader}
+$URI = "https://management.azure.com/subscriptions/$subid/providers/microsoft.insights/eventtypes/management/values?api-version=2015-04-01&$filter" 
+$js=""
+$js=Invoke-RestMethod -Uri $URI -Method $method -Headers $headers -ContentType 'application/json' 
+$nv=[bool]($js.PSobject.Properties.name -match "Value")
+If($nv -eq'True')
+{
+$js.value | Export-Csv -Path "$folderpath\$subid.csv" -Append -NoTypeInformation
+}
+$nl=[bool]($js.PSobject.Properties.name -match "nextLink")
+$cnt=0
+IF($nl -eq "True")
+{
+Do {
+$cnt+=1
+$js1=Invoke-RestMethod -Uri $js.nextLink -Method $method -Headers $headers -ContentType 'application/json' 
+$js=$js1
+$js1.value | Export-Csv -Path "$folderpath\$subid.csv" -Append -NoTypeInformation -Force
+$nl=[bool]($js1.PSobject.Properties.name -match "nextlink")
+
+} 
+until ($nl -match "False")
+}
+
