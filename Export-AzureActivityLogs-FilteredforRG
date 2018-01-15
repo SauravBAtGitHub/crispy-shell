@@ -1,4 +1,4 @@
-#Script to download Audit logs and filter output based on ResourceGroup
+#Script to download Activity logs and filter output based on ResourceGroup to CSV file
 
 #Creating Folder for output
 [system.io.directory]::CreateDirectory("$env:USERPROFILE\AzureScriptActivityLogOutput")
