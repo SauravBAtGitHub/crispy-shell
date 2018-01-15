@@ -1,0 +1,69 @@
+#Exports audit logs for all subscriptions to a CSV file
+
+Login-AzureRmAccount
+$subs = Get-AzureRmSubscription
+[system.io.directory]::CreateDirectory("$env:USERPROFILE\AzureScriptOutput")
+$folderpath = ("$env:USERPROFILE\AzureScriptOutput")
+foreach($subid in $subs)
+{
+Echo "======================="
+Echo $subid
+Echo "======================="
+#$subid= '725da42f-fba6-4cb9-91cd-ceab7f46ee11'
+# Set Azure AD Tenant name
+#$subid="05430d89-5775-479c-94a9-b27f879b0dd4"
+$adTenant = "microsoft.onmicrosoft.com" 
+# Set well-known client ID for AzurePowerShell
+$clientId = "1950a258-227b-4e31-a9cf-717495945fc2" 
+# Set redirect URI for Azure PowerShell
+$redirectUri = "urn:ietf:wg:oauth:2.0:oob"
+# Set Resource URI to Azure Service Management API
+$resourceAppIdURI = "https://management.core.windows.net/"
+# Set Authority to Azure AD Tenant
+$authority = "https://login.windows.net/$adTenant"
+# Create Authentication Context tied to Azure AD Tenant
+$authContext = New-Object "Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext" -ArgumentList $authority
+# Acquire token
+$authResult = $authContext.AcquireToken($resourceAppIdURI, $clientId, $redirectUri, "Auto")
+$authHeader = $authResult.CreateAuthorizationHeader()
+#$authHeader | Out-File f:\jwt1.txt
+# API method
+$method = "GET"
+# API header
+$headerDate = '2015-04-01'
+#$authHeader = $authResult.CreateAuthorizationHeader()
+# Set HTTP request headers to include Authorization header
+$headers = @{"x-ms-version"="$headerDate";"Authorization" = $authHeader}
+# generate the API URI
+#$sub = (Get-AzureSubscription -Current -ExtendedDetails)
+#$subID = $sub.SubscriptionID
+$filter="eventTimestamp ge '2017-12-25T22:00:37Z' and eventTimestamp le '2017-12-31T23:36:37Z' and eventChannels eq 'Admin, Operation'" # and resourceGroupName eq 'classicdiag'"
+$URI = "https://management.azure.com/subscriptions/$subid/providers/microsoft.insights/eventtypes/management/values?api-version=2015-04-01&$filter" 
+# execute the Azure REST API
+#Invoke-RestMethod -Uri $URI -Method $method -Headers $headers -ContentType 'application/json'| Out-File "$folderpath\1.json"
+$js=""
+$js=Invoke-RestMethod -Uri $URI -Method $method -Headers $headers -ContentType 'application/json' 
+$nv=[bool]($js.PSobject.Properties.name -match "Value")
+
+
+If($nv -eq'True')
+{
+$js.value | Export-Csv -Path "$folderpath\$subid.csv" -Append -NoTypeInformation
+}
+$nl=[bool]($js.PSobject.Properties.name -match "nextLink")
+$cnt=0
+IF($nl -eq "True")
+{
+Echo "First link is:$js.nextLink"
+Do {
+$cnt+=1
+$js1=Invoke-RestMethod -Uri $js.nextLink -Method $method -Headers $headers -ContentType 'application/json' #| Out-File "$folderpath\1.json" -Append
+Echo $js1.nextLink
+$js=$js1
+$js1.value | Export-Csv -Path "$folderpath\$subid.csv" -Append -NoTypeInformation -Force
+$nl=[bool]($js1.PSobject.Properties.name -match "nextlink")
+Echo $nl
+} 
+until ($nl -match "False")
+}
+}
