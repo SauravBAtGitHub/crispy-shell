@@ -17,11 +17,7 @@
         -rgroup = Resource Group Name 
         -vmname = Virutal Machine Name 
         -location = Virtual Machine location
-        -ShutdownTime = 1400 HRS
-        -ClientId = Your Client ID 
-        -ClientKey = Your Secret Key
-        -TenantId = Tenant Id
-        
+        -ShutdownTime = 1400         
         
     Save New-EnableAutoShutdownForVMs.PSM1 in your desired folder, say C:\AutoshutVM\
     
@@ -33,9 +29,6 @@
     Login-AzureRmAccount
     $Tenant= Select-AzureRmSubscription -SubscriptionId <SubID>
     $subId = $Tenant.Subscription.SubscriptionId
-    $ClientID = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-    $ClientKey =  "xxxxxxxxxxxx"
-    $TenantID= "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx"
     $VMlists = Get-AzureRmVM
 
     Foreach ($vmobj in $VMlists)
@@ -59,35 +52,23 @@ Function New-EnableAutoShutdownForVMs
         [Parameter(Mandatory=$true)][String]$rgroup,
         [Parameter(Mandatory=$true)][String]$vmname,
         [Parameter(Mandatory=$true)][String]$location,
-        [Parameter(Mandatory=$true)][String]$shutdownTime,
-        [Parameter(Mandatory=$true)][String]$TenantId,
-        [Parameter(Mandatory=$true)][String]$ClientId, 
-        [Parameter(Mandatory=$true)][String]$ClientKey 
-        
+        [Parameter(Mandatory=$true)][String]$shutdownTime
+       
     ) 
  
-     
-    Add-Type -Path "<local path>\Microsoft.IdentityModel.Clients.ActiveDirectory.dll"
-    Add-Type -Path "<local path>\Microsoft.IdentityModel.Clients.ActiveDirectory.Platform.dll" 
- 
-    # Authorization & resource Url 
-    $authUrl = "https://login.windows.net/$TenantId/" 
-    $resource = "https://management.core.windows.net/" 
- 
-    # Create credential for client application 
-    $clientCred = [Microsoft.IdentityModel.Clients.ActiveDirectory.ClientCredential]::new($ClientId, $ClientKey) 
- 
-    # Create AuthenticationContext for acquiring token 
-    $authContext = [Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext]::new($authUrl, $false) 
- 
-    # Acquire the authentication result 
-    $authResult = $authContext.AcquireTokenAsync($resource, $clientCred).Result 
- 
-    # Compose the access token type and access token for authorization header 
-    $authHeader = $authResult.AccessTokenType + " " + $authResult.AccessToken 
- 
-    # the final header hash table 
-    $authHeader = @{"Authorization"=$authHeader; "Content-Type"="application/json"}
+$adTenant = "microsoft.onmicrosoft.com" 
+# Set well-known client ID for Azure PowerShell
+$clientId = "1950a258-227b-4e31-a9cf-717495945fc2" 
+$redirectUri = "urn:ietf:wg:oauth:2.0:oob"
+$resourceAppIdURI = "https://management.core.windows.net/"
+$authority = "https://login.windows.net/$adTenant"
+$authContext = New-Object "Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext" -ArgumentList $authority
+$authResult = $authContext.AcquireToken($resourceAppIdURI, $clientId, $redirectUri, "Auto")
+$authHeader = $authResult.CreateAuthorizationHeader()
+$headerDate = '2017-03-30'
+$method = "PUT"    
+$headers = @{"x-ms-version"="$headerDate";"Authorization" = $authHeader}     
+    
   
     # Forming the URI to be invoked later 
     $uri =  "https://management.azure.com/subscriptions/$subId/resourcegroups/$rgroup/providers/Microsoft.DevTestLab/schedules/shutdown-computevm-" + $vmName + "?api-version=2017-04-26-preview"
@@ -111,7 +92,7 @@ Function New-EnableAutoShutdownForVMs
            }
 "@
 
-    $Result = Invoke-RestMethod -Method PUT -Headers $authHeader -Uri $Uri -Body $params
+    $Result = Invoke-RestMethod -Method PUT -Headers $Headers -Uri $Uri -Body $params -ContentType 'application/json'
     return "AutoShutdown at $shutdownTime hrs IST successfully set for VM - $vmname "
    
 } 
